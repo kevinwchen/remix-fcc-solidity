@@ -15,6 +15,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.8;
 
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol"; // import ABI from github
+
 contract FundMe {
 
     uint256 public minimumUsd = 50;
@@ -28,9 +30,14 @@ contract FundMe {
         require(msg.value >= minimumUsd, "Didn't send enough!"); // 1e18 wei = 1ETH
     }
 
-    function getPrice() public {
+    function getPrice() public view returns(uint256) {
         // ABI
         // Address 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
+        (,int256 price,,,) = priceFeed.latestRoundData();
+        return uint256(price * 1e10);
+        // uint256 addDecimals = 18 - priceFeed.decimals();
+        // return price * (10 ** addDecimals);
     }
 
     function getConversionRate() public {
