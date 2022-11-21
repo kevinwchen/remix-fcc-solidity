@@ -19,7 +19,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol"; // 
 
 contract FundMe {
 
-    uint256 public minimumUsd = 50;
+    uint256 public minimumUsd = 50 * 1e18;
 
     function fund() public payable {
         // Want to be able to set a minimum fund amount in USD
@@ -27,7 +27,7 @@ contract FundMe {
 
         // require(boolean, revert message)
         // Reverting undoes any previous action, send remaining gas back
-        require(msg.value >= minimumUsd, "Didn't send enough!"); // 1e18 wei = 1ETH
+        require(getConversionRate(msg.value) >= minimumUsd, "Didn't send enough!"); // 1e18 wei = 1ETH
     }
 
     function getPrice() public view returns(uint256) {
@@ -40,8 +40,10 @@ contract FundMe {
         // return price * (10 ** addDecimals);
     }
 
-    function getConversionRate() public {
-        
+    function getConversionRate(uint256 ethAmount) public view returns (uint256) {
+        uint ethPrice = getPrice();
+        uint256 ethAmountInUsd = (ethPrice * ethAmount) / 1e18;
+        return ethAmountInUsd;
     }
 
     // function withdraw() {}
