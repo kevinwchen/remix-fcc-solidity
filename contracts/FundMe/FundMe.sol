@@ -15,11 +15,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.8;
 
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol"; // import ABI from github
+import "./PriceConverter.sol";
 
 contract FundMe {
+    using PriceConverter for uint256;
 
     uint256 public minimumUsd = 50 * 1e18;
+
+    address[] public funders;
+    mapping(address => uint256) public addressToAmountFunded;
 
     function fund() public payable {
         // Want to be able to set a minimum fund amount in USD
@@ -27,23 +31,9 @@ contract FundMe {
 
         // require(boolean, revert message)
         // Reverting undoes any previous action, send remaining gas back
-        require(getConversionRate(msg.value) >= minimumUsd, "Didn't send enough!"); // 1e18 wei = 1ETH
-    }
-
-    function getPrice() public view returns(uint256) {
-        // ABI
-        // Address 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
-        (,int256 price,,,) = priceFeed.latestRoundData();
-        return uint256(price * 1e10);
-        // uint256 addDecimals = 18 - priceFeed.decimals();
-        // return price * (10 ** addDecimals);
-    }
-
-    function getConversionRate(uint256 ethAmount) public view returns (uint256) {
-        uint ethPrice = getPrice();
-        uint256 ethAmountInUsd = (ethPrice * ethAmount) / 1e18;
-        return ethAmountInUsd;
+        require(msg.value.getConversionRate() >= minimumUsd, "Didn't send enough!"); // 1e18 wei = 1ETH
+        funders.push(msg.sender);
+        addressToAmountFunded[msg.sender] = msg.value;
     }
 
     // function withdraw() {}
