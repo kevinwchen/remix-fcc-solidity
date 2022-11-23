@@ -32,9 +32,28 @@ contract FundMe {
         // require(boolean, revert message)
         // Reverting undoes any previous action, send remaining gas back
         require(msg.value.getConversionRate() >= minimumUsd, "Didn't send enough!"); // 1e18 wei = 1ETH
-        funders.push(msg.sender);
-        addressToAmountFunded[msg.sender] = msg.value;
+        funders.push(msg.sender); // add funder address to funders list
+        addressToAmountFunded[msg.sender] = msg.value; // add funder address to mapping to amount funded
     }
 
-    // function withdraw() {}
+    function withdraw() public {
+        for (uint256 funderIndex = 0; funderIndex < funders.length; funderIndex++) {
+            address funder = funders[funderIndex]; // get address for each funder on the list
+            addressToAmountFunded[funder] = 0; // reset amount funded to zero
+        }
+        
+        // Reset the array
+        funders = new address[](0); // (0) means 0 objects upon declaration
+
+        // Three methods to withdraw funds:
+        // transfer
+        // Need to typecast address to 'payable address' type
+        // payable(msg.sender).transfer(address(this).balance); // 'this' refers to this entire contract
+        // // send
+        // bool sendSuccess = payable(msg.sender).send(address(this).balance);
+        // require(sendSuccess, "Send failed"); // will revert transaction if fails
+        // call
+        (bool callSuccess, ) = payable(msg.sender).call{value: address(this).balance}("");
+        require(callSuccess, "Call failed");
+    }
 }
