@@ -25,6 +25,12 @@ contract FundMe {
     address[] public funders;
     mapping(address => uint256) public addressToAmountFunded;
 
+    address public owner;
+
+    constructor() { // constructors are functions that get called immediately after deploying the contract
+        owner = msg.sender; // sender of constructor is the address that deployed the contract
+    }
+
     function fund() public payable {
         // Want to be able to set a minimum fund amount in USD
         // 1. How do we send ETH to this contract?
@@ -36,7 +42,7 @@ contract FundMe {
         addressToAmountFunded[msg.sender] = msg.value; // add funder address to mapping to amount funded
     }
 
-    function withdraw() public {
+    function withdraw() public onlyOwner {
         for (uint256 funderIndex = 0; funderIndex < funders.length; funderIndex++) {
             address funder = funders[funderIndex]; // get address for each funder on the list
             addressToAmountFunded[funder] = 0; // reset amount funded to zero
@@ -55,5 +61,10 @@ contract FundMe {
         // call
         (bool callSuccess, ) = payable(msg.sender).call{value: address(this).balance}("");
         require(callSuccess, "Call failed");
+    }
+
+    modifier onlyOwner { // can add modifiers to functions
+        require(msg.sender == owner, "Sender is not owner"); // check the withdrawer is the owner of the contract
+        _; // underscore represents the code of the function being modified
     }
 }
