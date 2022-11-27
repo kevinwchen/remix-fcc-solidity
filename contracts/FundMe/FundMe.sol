@@ -17,18 +17,23 @@ pragma solidity ^0.8.8;
 
 import "./PriceConverter.sol";
 
+// 837285 before constant MINIMUM_USD
+// 817755 after constant MINIMUM_USD
+
+error NotOwner();
+
 contract FundMe {
     using PriceConverter for uint256;
 
-    uint256 public minimumUsd = 50 * 1e18;
+    uint256 public constant MINIMUM_USD = 50 * 1e18;
 
     address[] public funders;
     mapping(address => uint256) public addressToAmountFunded;
 
-    address public owner;
+    address public immutable i_owner; // variable set only once but not on the same line as initialisation can be set as immutable
 
     constructor() { // constructors are functions that get called immediately after deploying the contract
-        owner = msg.sender; // sender of constructor is the address that deployed the contract
+        i_owner = msg.sender; // sender of constructor is the address that deployed the contract
     }
 
     function fund() public payable {
@@ -37,7 +42,7 @@ contract FundMe {
 
         // require(boolean, revert message)
         // Reverting undoes any previous action, send remaining gas back
-        require(msg.value.getConversionRate() >= minimumUsd, "Didn't send enough!"); // 1e18 wei = 1ETH
+        require(msg.value.getConversionRate() >= MINIMUM_USD, "Didn't send enough!"); // 1e18 wei = 1ETH
         funders.push(msg.sender); // add funder address to funders list
         addressToAmountFunded[msg.sender] = msg.value; // add funder address to mapping to amount funded
     }
@@ -64,7 +69,18 @@ contract FundMe {
     }
 
     modifier onlyOwner { // can add modifiers to functions
-        require(msg.sender == owner, "Sender is not owner"); // check the withdrawer is the owner of the contract
+        // require(msg.sender == i_owner, "Sender is not owner"); // check the withdrawer is the owner of the contract
+
+        // alternative, declare custom errors
+        if(msg.sender != i_owner) {
+            revert NotOwner();
+        }
+        
         _; // underscore represents the code of the function being modified
     }
+
+    // What happens if someone sends this contract ETH without calling the fund function?
+
+    // receive()
+    // fallback
 }
